@@ -14,6 +14,9 @@ variable "instance_type" {
 variable "public_key_location" {
   
 }
+variable "private_key_location" {
+  
+}
 
 
 
@@ -185,6 +188,25 @@ resource "aws_instance" "myapp-server" {
   #             EOF
 
   user_data = file("entry-script.sh")
+
+  #alternatively user provisioners(not recommended) to execute command on the remote server
+  #to invoke command on a remote source after resource is created
+  connection {
+    type="ssh"
+    host=self.public_ip
+    user="ec2-user"
+    private_key=file(var.private_key_location)
+  }
+
+  # file provisioner is used to copy file to remote server
+  provisioner "file" {
+    source ="entry-script.sh"
+    destination = "/home/ec2-user/entry-script-on-ec2.sh"
+  }
+  provisioner "remote-exec" {
+    script = file("entry-script-on-ec2.sh")
+  }
+
   tags={
     Name: "${var.env_prefix}-dev-server"
   }
